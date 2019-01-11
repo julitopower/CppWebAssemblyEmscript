@@ -1,4 +1,6 @@
 #include <iostream>
+#include <string>
+#include <vector>
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
@@ -19,7 +21,7 @@ struct Context {
     // is what SDL actually draws
     font = TTF_OpenFont("assets/DejaVuSansMono.ttf", 12);
     white = {255, 255, 255};
-    surf = TTF_RenderText_Solid(font, text.c_str(), white);
+    surf = TTF_RenderText_Solid(font, sentences.back().c_str(), white);
     tex = SDL_CreateTextureFromSurface(renderer, surf);    
   }
   
@@ -40,7 +42,7 @@ struct Context {
   TTF_Font* font;
   SDL_Surface* surf;
   SDL_Texture* tex;
-  std::string text = "_";
+  std::vector<std::string> sentences{"_"};
 };
 
 void loop_handler(void* ctx_ptr) {
@@ -49,35 +51,46 @@ void loop_handler(void* ctx_ptr) {
   SDL_Event event;
   if (SDL_PollEvent(&event) != 0) {
     if (event.type == SDL_KEYDOWN) {
+      auto& sentence = ctx->sentences.back();
       // Prepare the text: Remove '_' suffix, add new character, ....
-      ctx->text.pop_back();
+      sentence.pop_back();
       int key = event.key.keysym.sym;
 
       switch(key) {
-        case SDLK_BACKSPACE: ctx->text.pop_back(); break;
-        default: ctx->text += event.key.keysym.sym;
+        case SDLK_BACKSPACE:
+          if (ctx->sentences.back().size() > 0) {
+            ctx->sentences.back().pop_back();
+          } else if (ctx->sentences.size() > 1) {
+            ctx->sentences.pop_back();
+          }
+          break;
+        case SDLK_RETURN: ctx->sentences.push_back(""); break;
+        default: ctx->sentences.back() += event.key.keysym.sym;
       }
-      ctx->text += "_";
-
-      // We will be creating a new texture, so destroy the current
-      SDL_DestroyTexture(ctx->tex);
-      SDL_FreeSurface(ctx->surf);
-      // Create the new surface and texture
-      ctx->surf = TTF_RenderText_Solid(ctx->font, ctx->text.c_str(), ctx->white);
-      ctx->tex = SDL_CreateTextureFromSurface(ctx->renderer, ctx->surf);          
+      ctx->sentences.back() += "_";      
     }
   }
-  
-  
-  // Determine the size of the text texture, so that we can
-  // draw it in the right scale
-  int w, h;
-  SDL_QueryTexture(ctx->tex, NULL, NULL, &w, &h);
-  SDL_Rect dst{0, 0, w, h};
 
-  // Copy the texture to the rendere and draw it
-  SDL_RenderCopy(ctx->renderer, ctx->tex, nullptr, &dst);
-  SDL_RenderPresent(ctx->renderer);  
+
+  // We will be creating a new texture, so destroy the current
+  auto y = 12;
+  for(const auto& sentence : ctx->sentences) {
+    SDL_DestroyTexture(ctx->tex);
+    SDL_FreeSurface(ctx->surf);
+    // Create the new surface and texture
+    ctx->surf = TTF_RenderText_Solid(ctx->font, sentence.c_str(), ctx->white);
+    ctx->tex = SDL_CreateTextureFromSurface(ctx->renderer, ctx->surf); 
+    // Determine the size of the text texture, so that we can
+    // draw it in the right scale
+    int w, h;
+    SDL_QueryTexture(ctx->tex, NULL, NULL, &w, &h);
+    SDL_Rect dst{0, y, w, h};
+        
+    // Copy the texture to the rendere and draw it
+    SDL_RenderCopy(ctx->renderer, ctx->tex, nullptr, &dst);
+    y += 16;
+    SDL_RenderPresent(ctx->renderer);
+  }
 }
 
 int main(int argc, char** argv) {

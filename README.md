@@ -2,8 +2,8 @@
 
 WebAssembly + C++ + Emscript. The current example contains a Canvas that captures keyboard input. This is an early effort, and it has limitations:
 
-* Doesn't handle control characers other than backspace
-* Single line. Wrap around is not implemented
+* Doesn't handle control characters other than backspace, and return
+* Wrap around is not implemented
 
 This project will be morphing into a graphical application, and different commits are likely to reflect progress in my understanding of WebAssembly/Emscripten features
 
