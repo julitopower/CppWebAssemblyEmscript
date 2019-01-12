@@ -9,16 +9,7 @@
 
 struct TextContext {
   TextContext();
-  ~TextContext() {
-    SDL_DestroyTexture(tex);
-    SDL_FreeSurface(surf);
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(win);
-
-    TTF_CloseFont(font);
-    TTF_Quit();
-    SDL_Quit();    
-  }
+  ~TextContext();
 
   SDL_Color white;
   SDL_Window* win;

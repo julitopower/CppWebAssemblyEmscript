@@ -17,6 +17,17 @@ TextContext::TextContext() {
   tex = SDL_CreateTextureFromSurface(renderer, surf);    
 }
 
+TextContext::~TextContext() {
+  SDL_DestroyTexture(tex);
+  SDL_FreeSurface(surf);
+  SDL_DestroyRenderer(renderer);
+  SDL_DestroyWindow(win);
+
+  TTF_CloseFont(font);
+  TTF_Quit();
+  SDL_Quit();    
+}
+
 void loop_handler(void* ctx_ptr) {
   TextContext* ctx{static_cast<TextContext*>(ctx_ptr)};
 
