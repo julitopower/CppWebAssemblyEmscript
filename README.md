@@ -24,3 +24,7 @@ make
 ```bash
 make run
 ```
+
+# Notes
+
+There is a very good example of OpenGL Emscripten in [github](https://gist.github.com/SuperV1234/5c5ad838fe5fe1bf54f9).
