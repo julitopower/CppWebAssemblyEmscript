@@ -7,13 +7,22 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengles2.h>
 
-
+/*!
+ * \brief A triangle class for OpenGL
+ */
 class EqTriangle {
  public:
   EqTriangle(std::initializer_list<GLfloat> il, GLfloat size);
   GLfloat vertices_[9];
 };
 
+/*!
+ * \brief A context for demoing OpenGL
+ *
+ * At this stage its responsabilities are not fully specified.
+ * I want to get to a point where I can draw something meaningful
+ * and then I'll put together a proper extensible design
+ */
 class OpenGLContext {
  public:
   OpenGLContext(std::size_t width, std::size_t height);
@@ -23,16 +32,19 @@ class OpenGLContext {
   GLuint load_shader(const std::string& filepath, GLenum type);
 
  private:
-  std::size_t width_;
-  std::size_t height_;
-  SDL_Window* win_;
-  SDL_GLContext context_;
-  EqTriangle triangle_;
-  GLuint vertex_shader;
-  GLuint fragment_shader;  
+  std::size_t width_;      // Window width
+  std::size_t height_;     // Window height
+  SDL_Window* win_;        // Windo handler
+  SDL_GLContext context_;  // SDL OpenGL handler
+  EqTriangle triangle_;    // A triangle
+  GLuint vertex_shader;    // A vertex shader handler
+  GLuint fragment_shader;  // A fragment shader handler 
   
 };
 
+/*!
+ * \brief Event handling and drawing loog
+ */
 void ogl_loop_handler(void* ctx_ptr);
 
 #endif // OGL_DEMO_HPP
