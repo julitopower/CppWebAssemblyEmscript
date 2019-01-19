@@ -26,8 +26,10 @@ EqTriangle::EqTriangle(std::initializer_list<GLfloat> il, GLfloat size) {
 }
 
 OpenGLContext::OpenGLContext(std::size_t width, std::size_t height):
-    width_{width}, height_{height}, triangle_{{0.0f, 0.0f, 0.0f}, 0.5} {
-  // 1. Initialize SDK and create OpenGL window
+    width_{width}, height_{height} {
+  ////////////////////////////////////////////////////////////////////////////////
+  // Initialize SDL and create OpenGL window
+  ////////////////////////////////////////////////////////////////////////////////
   SDL_Init(SDL_INIT_VIDEO);
   win_ = SDL_CreateWindow("OpenGL WebAssembly",
                           0,
@@ -35,49 +37,46 @@ OpenGLContext::OpenGLContext(std::size_t width, std::size_t height):
                           width_,
                           height_,
                           SDL_WINDOW_OPENGL);
-
-
-  //2. Set OpenGL attributes before getting the context
+  // Set OpenGL attributes before getting the context
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-  
-  // 3. Generate the GL context
+  // Generate the GL context
   context_ = SDL_GL_CreateContext(win_);
+  ////////////////////////////// SDL initialization end ////////////////////////
 
-  // Load the data
-  // Create a Vertex Buffer Object and copy the vertex data to it
-  GLuint vbo;
-  glGenBuffers(1, &vbo);
-
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_.vertices_),
-               triangle_.vertices_, GL_STATIC_DRAW);  
-  
-  // 4. Load the shaders
+  //////////////////////////////////////////////////////////////////////////////
+  // Shader loading and program linking
+  //////////////////////////////////////////////////////////////////////////////
   GLuint vertex_shader = load_shader("assets/noop.vert", GL_VERTEX_SHADER);
-  std::cout << vertex_shader << std::endl;
   GLuint fragment_shader = load_shader("assets/white.frag", GL_FRAGMENT_SHADER);
-  std::cout << fragment_shader << std::endl;
+
   // 5. Link shaders into a program
 
-  GLuint shaderProgram = glCreateProgram();
-  glAttachShader(shaderProgram, vertex_shader);
-  glAttachShader(shaderProgram, fragment_shader);
+  program_ = glCreateProgram();
+  glAttachShader(program_, vertex_shader);
+  glAttachShader(program_, fragment_shader);
   
-  glLinkProgram(shaderProgram);
-  glUseProgram(shaderProgram);
+  glLinkProgram(program_);
+  glUseProgram(program_);
 
   glDeleteShader(vertex_shader);
   glDeleteShader(fragment_shader);
-  
-  // Specify the layout of the vertex data
-  GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
-  glEnableVertexAttribArray(posAttrib);
-  glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  position_attribute_ = glGetAttribLocation(program_, "position");
+  ///////////////// Shader loading end /////////////////////////////////////////
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Data loading and VBO initialization
+  //////////////////////////////////////////////////////////////////////////////
+  EqTriangle triangle_{{0.0f, 0.0f, 0.0f}, 0.5};
+  glGenBuffers(1, &vbo_);
+  glBindBuffer(GL_ARRAY_BUFFER, vbo_);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_.vertices_),
+               triangle_.vertices_, GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 OpenGLContext::~OpenGLContext() {
@@ -88,6 +87,18 @@ OpenGLContext::~OpenGLContext() {
 
 SDL_Window* OpenGLContext::window() const {
   return win_;
+}
+
+GLuint OpenGLContext::vbo() const {
+  return vbo_;
+}
+
+GLuint OpenGLContext::program() const {
+  return program_;
+}
+
+GLint OpenGLContext::position_attribute() const {
+  return position_attribute_;
 }
 
 void OpenGLContext::swap_buffers() {
@@ -112,18 +123,19 @@ GLuint OpenGLContext::load_shader(const std::string& filepath, GLenum type) {
 
 void ogl_loop_handler(void* ctx_ptr) {
   OpenGLContext* ctx = static_cast<OpenGLContext*>(ctx_ptr);
-  static float red = 0.;
 
-  // Clean the buffer with a color that changes over time
-  if (red > 1.0) {
-    red = 0.0;
-  }
-  glClearColor(1., red, red, 1.);
-  red += 0.005;
+  // Clear buffer
+  glClearColor(1.0, 1.0, 1.0, 1.0);
   glClear(GL_COLOR_BUFFER_BIT);
 
-  // Here is where we should do some meaningful drawing
+  // Draw
+  glUseProgram(ctx->program());
+  glBindBuffer(GL_ARRAY_BUFFER, ctx->vbo());
+  glEnableVertexAttribArray(ctx->position_attribute());
+  glVertexAttribPointer(ctx->position_attribute(), 3, GL_FLOAT, GL_FALSE, 0, 0);  
   glDrawArrays(GL_TRIANGLES, 0, 3);
+  glDisableVertexAttribArray(ctx->position_attribute());
+  
   // Finally swap the buffers
   ctx->swap_buffers();
 }

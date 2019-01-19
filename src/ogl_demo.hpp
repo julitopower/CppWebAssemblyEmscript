@@ -28,6 +28,9 @@ class OpenGLContext {
   OpenGLContext(std::size_t width, std::size_t height);
   ~OpenGLContext();
   SDL_Window* window() const;
+  GLuint vbo() const;
+  GLuint program() const;
+  GLint position_attribute() const;
   void swap_buffers();
   GLuint load_shader(const std::string& filepath, GLenum type);
 
@@ -36,9 +39,11 @@ class OpenGLContext {
   std::size_t height_;     // Window height
   SDL_Window* win_;        // Windo handler
   SDL_GLContext context_;  // SDL OpenGL handler
-  EqTriangle triangle_;    // A triangle
   GLuint vertex_shader;    // A vertex shader handler
-  GLuint fragment_shader;  // A fragment shader handler 
+  GLuint fragment_shader;  // A fragment shader handler
+  GLuint vbo_;
+  GLuint program_;
+  GLint position_attribute_;
   
 };
 
