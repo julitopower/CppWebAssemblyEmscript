@@ -2,14 +2,18 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <vector>
 
 #include "ogl_demo.hpp"
 #include <SDL2/SDL_opengles2.h>
 
-EqTriangle::EqTriangle(std::initializer_list<GLfloat> il, GLfloat size) {
+EqTriangle::EqTriangle(std::initializer_list<GLfloat> center_l, GLfloat size) {
+  if (center_l.size() != 3) {
+    throw std::invalid_argument{"Center must have 3 coordinates"};
+  }
   auto idx = 0U;
   GLfloat center[9];
-  for(auto& val : il) {
+  for(auto& val : center_l) {
     center[idx++] = val;
   }
   vertices_[0] = center[0];
@@ -54,8 +58,7 @@ OpenGLContext::OpenGLContext(std::size_t width, std::size_t height):
   GLuint vertex_shader = load_shader("assets/noop.vert", GL_VERTEX_SHADER);
   GLuint fragment_shader = load_shader("assets/white.frag", GL_FRAGMENT_SHADER);
 
-  // 5. Link shaders into a program
-
+  // Link shaders into a program
   program_ = glCreateProgram();
   glAttachShader(program_, vertex_shader);
   glAttachShader(program_, fragment_shader);
@@ -71,11 +74,14 @@ OpenGLContext::OpenGLContext(std::size_t width, std::size_t height):
   //////////////////////////////////////////////////////////////////////////////
   // Data loading and VBO initialization
   //////////////////////////////////////////////////////////////////////////////
-  EqTriangle triangle_{{0.0f, 0.0f, 0.0f}, 0.5};
+  std::vector<EqTriangle> triangles{};
+  triangles.push_back(EqTriangle{{0.0f, 0.0f, 0.0f}, 0.5});
+  triangles.push_back(EqTriangle{{0.75f, 0.0f, 0.0f}, 0.20});  
+
   glGenBuffers(1, &vbo_);
   glBindBuffer(GL_ARRAY_BUFFER, vbo_);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_.vertices_),
-               triangle_.vertices_, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * triangles.size() * sizeof(EqTriangle),
+               reinterpret_cast<GLfloat*>(triangles.data()), GL_STATIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
@@ -133,7 +139,7 @@ void ogl_loop_handler(void* ctx_ptr) {
   glBindBuffer(GL_ARRAY_BUFFER, ctx->vbo());
   glEnableVertexAttribArray(ctx->position_attribute());
   glVertexAttribPointer(ctx->position_attribute(), 3, GL_FLOAT, GL_FALSE, 0, 0);  
-  glDrawArrays(GL_TRIANGLES, 0, 3);
+  glDrawArrays(GL_TRIANGLES, 0, 6);
   glDisableVertexAttribArray(ctx->position_attribute());
   
   // Finally swap the buffers

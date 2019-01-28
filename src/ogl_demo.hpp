@@ -12,7 +12,7 @@
  */
 class EqTriangle {
  public:
-  EqTriangle(std::initializer_list<GLfloat> il, GLfloat size);
+  EqTriangle(std::initializer_list<GLfloat> center, GLfloat size);
   GLfloat vertices_[9];
 };
 
